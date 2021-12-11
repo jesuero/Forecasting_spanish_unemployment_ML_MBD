@@ -16,10 +16,10 @@ library(Hmisc)
 fdata <- read.table("UnemploymentSpain.dat",header = TRUE, sep = "")
 
 # A new variable COVID is introduced in order to take into account the pandemic period
-fdata$COVID = 0
+fdata$COVID = 0 # value is 0 when is not a COVID month
 covid_start = which(fdata$DATE=="01/03/2020")
 covid_end = nrow(fdata)
-fdata$COVID[covid_start:covid_end] = fdata$TOTAL[covid_start:covid_end]
+fdata$COVID[covid_start:covid_end] = fdata$TOTAL[covid_start:covid_end] # value is this month unemployment when is a COVID month
 
 # Convert to time series object
 fdata_ts <- ts(fdata, start = 2001, frequency = 12) # 12 months period
@@ -33,15 +33,15 @@ autoplot(y1, facets = TRUE)
 
 # Selection of the explicative variable COVID
 y <- y1[,2]
-x <- y1[,3]/mean(y1[,3])
+x <- y1[,3]/mean(y1[,3]) # here the COVID variable is scaled by its mean
 
-# x variable plot
+# x variable plot (see its behaviour models the COVID influence) (variable higher value means more COVID and also more unemployment)
 autoplot(x)
 
 
 ## Identification and fitting process -------------------------------------------------------------------------------------------------------
 
-#### Fit initial FT model
+#### STEP 1: Fit initial FT model
 TF.fit <- arima(y,
                 order=c(1,0,0),
                 seasonal = list(order=c(1,0,0),period=12),
@@ -53,9 +53,10 @@ summary(TF.fit) #summary of training errors and estimated coefficients
 coeftest(TF.fit) # statistical significance of estimated coefficients
 # Check regression error to see the need of differentiation
 TF.RegressionError.plot(y,x,TF.fit,lag.max = 200)
+# Differentiation is needed on the regular part
 
 
-#### Fit second FT model with a regular diferentiation
+#### STEP 2: Fit second FT model with a regular diferentiation
 TF.fit <- arima(y,
                 order=c(1,1,0),
                 seasonal = list(order=c(1,0,0),period=12),
@@ -67,9 +68,10 @@ summary(TF.fit) #summary of training errors and estimated coefficients
 coeftest(TF.fit) # statistical significance of estimated coefficients
 # Check regression error to see the need of differentiation
 TF.RegressionError.plot(y,x,TF.fit,lag.max = 200)
+# Differentiation is needed on the seasonal part
 
 
-#### Fit third FT model with a regular and seasonal diferentiation
+#### STEP 3: Fit third FT model with a regular and seasonal diferentiation
 TF.fit <- arima(y,
                 order=c(1,1,0),
                 seasonal = list(order=c(1,1,0),period=12),
@@ -81,13 +83,15 @@ summary(TF.fit) #summary of training errors and estimated coefficients
 coeftest(TF.fit) # statistical significance of estimated coefficients
 # Check regression error to see the need of differentiation
 TF.RegressionError.plot(y,x,TF.fit,lag.max = 200)
+# identify significant lags and select p,d,q (is better to start testing with low p,d,q values)
 
 # Check numerator coefficients of explanatory variable
 TF.Identification.plot(x,TF.fit)
+# 3 first variables are important so s=3
+# no pattern of decay is found, having a set of non-zero coefficients followed by insignificant components, so r = 0
 
-
-#### Fit final model (arima noise with selected)
-xlag = Lag(x,0)   # b
+#### STEP 4: Fit final model
+xlag = Lag(x,0)
 xlag[is.na(xlag)]=0
 arima.fit <- arima(y,
                    order=c(2,1,1),
@@ -110,7 +114,6 @@ res <- residuals(arima.fit)
 res[is.na(res)] <- 0
 ccf(y = res, x = x)
 
-########
 
 # Check fitted
 autoplot(y, series = "Real")+
@@ -125,5 +128,5 @@ val.forecast_h3 <- TF.forecast(y.old = as.matrix(y), #past values of the series
                                x.new = as.matrix(x_fut), #New values of the explanatory variables
                                model = arima.fit, #fitted transfer function model
                                h=1) #Forecast horizon
-val.forecast_h3
+val.forecast_h3 # forecast for November 2021
 # 3255765
