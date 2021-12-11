@@ -6,8 +6,11 @@ The dataset contains the unemployment number and date in Spain from 01/01/2001 t
 Tasks:
 
 a) Identify the best Seasonal ARIMA model to forecast the total unemployment rate.
+
 b) Identify the best Dynamic Regression model to forecast the total unemployment rate accounting for the COVID-19 period using an intervention variable.
+
 c) Compare both models.
+
 d) Obtain the best forecast for the unemployment rate of November 2021.
 
 
