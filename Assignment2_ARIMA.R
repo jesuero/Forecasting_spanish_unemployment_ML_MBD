@@ -65,7 +65,7 @@ y1<-y1/1000000 # scale the time series
 #   d: 1 because differentiation is needed
 #   q: 1 lag observed in stationary ACF
 ----------------------------------------------
-(is better to start testing with low p,d,q values because higher means more model complexity)
+# is better to start testing with low p,d,q values because higher values mean more model complexity
 
 # Fit seasonal model with estimated order
 arima.fit <- Arima(y1,
